@@ -192,3 +192,14 @@
     (throw (ex-info (str (name (first no)) " tem que ser o ultimo elemento da consulta") {})))
   nos)
 
+(def ^:private terminais #{:contar :soma :media :agrupar-por})
+
+(defn analisar [texto]
+  (let [nos (->> (tokenizar texto)
+                 separar-elementos
+                 (mapv (comp first estagio))
+                 conferir-final)
+        ultimo (peek nos)]
+    (if (and ultimo (terminais (first ultimo)))
+      {:estagios (pop nos) :terminal ultimo}
+      {:estagios nos :terminal nil})))

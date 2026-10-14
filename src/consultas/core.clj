@@ -1,5 +1,6 @@
 (ns consultas.core
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [consultas.sintaxe :as sintaxe]))
 
 (defn linhas [texto]
   (->> (str/split-lines texto)
@@ -34,3 +35,6 @@
         esq (esquema cabecalho)]
     {:esquema   esq
      :registros (mapv #(registro esq %) resto)}))
+
+(defn analisar [texto]
+  (sintaxe/analisar texto))
