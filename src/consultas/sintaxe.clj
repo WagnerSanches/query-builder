@@ -90,6 +90,21 @@
     :else
     (comparacao tokens)))
 
-(defn expressao [tokens]
-  (unidade tokens))
+(defn nivel-e [tokens]
+  (let [[primeiro resto] (unidade tokens)]
+    (loop [no primeiro
+           resto resto]
+      (if (= (first resto) [:palavra "e"])
+        (let [[direita resto] (unidade (rest resto))]
+          (recur [:e no direita] resto))
+        [no resto]))))
+
+(defn expressao [tokens]   ; nível "ou"
+  (let [[primeiro resto] (nivel-e tokens)]
+    (loop [no primeiro
+           resto resto]
+      (if (= (first resto) [:palavra "ou"])
+        (let [[direita resto] (nivel-e (rest resto))]
+          (recur [:ou no direita] resto))
+        [no resto]))))
 
