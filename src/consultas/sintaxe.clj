@@ -108,3 +108,14 @@
           (recur [:ou no direita] resto))
         [no resto]))))
 
+(defn separar-elementos [tokens]
+  (if (empty? tokens)
+    []
+    (loop [ts tokens
+           elementos []]
+      (let [[elemento resto] (split-with #(not= % [:pipe]) ts)]
+        (when (empty? elemento)
+          (throw (ex-info "estagio vazio" {})))
+        (if (empty? resto)
+          (conj elementos elemento)
+          (recur (rest resto) (conj elementos elemento)))))))
