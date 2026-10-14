@@ -52,10 +52,14 @@
                         (recur resto (conj tokens tok)))
           :else (throw (ex-info (str "caractere desconhecido: " c) {:caractere c})))))))
 
-
-
 (defn consumir [tokens]
   [(first tokens) (rest tokens)])
+
+(defn- exigir [tokens esperado mensagem]
+  (let [[token resto] (consumir tokens)]
+    (if (= token esperado)
+      [token resto]
+      (throw (ex-info mensagem {})))))
 
 (defn comparacao [tokens]
   (let [[[_ campo]          resto] (consumir tokens)
@@ -124,16 +128,18 @@
   (let [[expr resto] (expressao tokens)]
     [[:onde expr] resto]))
 
-(defn estagio-ordenar [tokens]       ; tokens começa depois de "ordenar"
-  (let [[_por resto]      (consumir tokens)
+(defn estagio-ordenar [tokens]
+  (let [[_por resto]      (exigir tokens [:palavra "por"] "falta \"por\" depois de ordenar")
         [[_ campo] resto] (consumir resto)
         desc?             (= (first resto) [:palavra "desc"])
         resto             (if desc? (rest resto) resto)]
     [[:ordenar-por (keyword campo) (if desc? :desc :asc)] resto]))
 
-(defn estagio-limitar [tokens]       ; tokens começa depois de "limitar"
-  (let [[[_ n] resto] (consumir tokens)]
-    [[:limitar n] resto]))
+(defn estagio-limitar [tokens]
+  (let [[[tipo n] resto] (consumir tokens)]
+    (if (and (= tipo :numero) (integer? n))
+      [[:limitar n] resto]
+      (throw (ex-info "limitar espera um numero inteiro" {})))))
 
 (defn estagio-selecionar [tokens]    ; tokens começa depois de "selecionar"
   (loop [ts tokens
@@ -159,10 +165,10 @@
       (= primeiro [:palavra "soma"])   (terminal-soma resto)
       (= primeiro [:palavra "media"])  (terminal-media resto))))
 
-(defn terminal-agrupar [tokens]   ; tokens começa depois de "agrupar"
-  (let [[_por resto]      (consumir tokens)
+(defn terminal-agrupar [tokens]
+  (let [[_por resto]      (exigir tokens [:palavra "por"] "falta \"por\" depois de agrupar")
         [[_ campo] resto] (consumir resto)
-        [_com resto]      (consumir resto)
+        [_com resto]      (exigir resto [:palavra "com"] "falta \"com <agregacao>\" depois do campo")
         [agr resto]       (agregacao resto)]
     [[:agrupar-por (keyword campo) agr] resto]))
 
@@ -176,4 +182,5 @@
       (= primeiro [:palavra "contar"])     [[:contar] resto]
       (= primeiro [:palavra "soma"])       (terminal-soma resto)
       (= primeiro [:palavra "agrupar"])    (terminal-agrupar resto)
-      (= primeiro [:palavra "media"])      (terminal-media resto))))
+      (= primeiro [:palavra "media"])      (terminal-media resto)
+      :else (throw (ex-info (str "estagio desconhecido: " (second primeiro)) {})))))
