@@ -152,7 +152,20 @@
   (let [[[_ campo] resto] (consumir tokens)]
     [[:media (keyword campo)] resto]))
 
-    
+(defn agregacao [tokens]
+  (let [[primeiro resto] (consumir tokens)]
+    (cond
+      (= primeiro [:palavra "contar"]) [[:contar] resto]
+      (= primeiro [:palavra "soma"])   (terminal-soma resto)
+      (= primeiro [:palavra "media"])  (terminal-media resto))))
+
+(defn terminal-agrupar [tokens]   ; tokens começa depois de "agrupar"
+  (let [[_por resto]      (consumir tokens)
+        [[_ campo] resto] (consumir resto)
+        [_com resto]      (consumir resto)
+        [agr resto]       (agregacao resto)]
+    [[:agrupar-por (keyword campo) agr] resto]))
+
 (defn estagio [elemento]
   (let [[primeiro resto] (consumir elemento)]
     (cond
@@ -162,5 +175,5 @@
       (= primeiro [:palavra "selecionar"]) (estagio-selecionar resto)
       (= primeiro [:palavra "contar"])     [[:contar] resto]
       (= primeiro [:palavra "soma"])       (terminal-soma resto)
+      (= primeiro [:palavra "agrupar"])    (terminal-agrupar resto)
       (= primeiro [:palavra "media"])      (terminal-media resto))))
-
