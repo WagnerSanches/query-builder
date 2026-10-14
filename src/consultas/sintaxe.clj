@@ -184,3 +184,11 @@
       (= primeiro [:palavra "agrupar"])    (terminal-agrupar resto)
       (= primeiro [:palavra "media"])      (terminal-media resto)
       :else (throw (ex-info (str "estagio desconhecido: " (second primeiro)) {})))))
+
+(def ^:private finais #{:selecionar :contar :soma :media :agrupar-por})
+
+(defn conferir-final [nos]
+  (when-let [no (some #(when (finais (first %)) %) (butlast nos))]
+    (throw (ex-info (str (name (first no)) " tem que ser o ultimo elemento da consulta") {})))
+  nos)
+
