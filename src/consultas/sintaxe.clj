@@ -51,3 +51,20 @@
           (= c \")    (let [[tok resto] (ler-texto (rest cs))]
                         (recur resto (conj tokens tok)))
           :else (throw (ex-info (str "caractere desconhecido: " c) {:caractere c})))))))
+
+
+
+(defn consumir [tokens]
+  [(first tokens) (rest tokens)])
+
+(defn comparacao [tokens]
+  (let [[[_ campo]   resto] (consumir tokens)
+        [[_ op]      resto] (consumir resto)
+        [[_ literal] resto] (consumir resto)]
+    [[op (keyword campo) literal] resto]))
+
+(defn comparacao [tokens]
+  (let [[[_ campo]   resto] (consumir tokens)
+        [[_ op]      resto] (consumir resto)
+        [[_ literal] resto] (consumir resto)]
+    [[op (keyword campo) literal] resto]))
