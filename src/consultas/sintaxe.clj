@@ -58,13 +58,17 @@
   [(first tokens) (rest tokens)])
 
 (defn comparacao [tokens]
-  (let [[[_ campo]   resto] (consumir tokens)
-        [[_ op]      resto] (consumir resto)
-        [[_ literal] resto] (consumir resto)]
-    [[op (keyword campo) literal] resto]))
+  (let [[[_ campo]          resto] (consumir tokens)
+        [[tipo-op op]       resto] (consumir resto)
+        [[tipo-lit literal] resto] (consumir resto)]
+    (cond
+      (not= tipo-op :op)
+      (throw (ex-info (str "operador desconhecido depois de " campo (when op (str ": " op)))
+                      {:campo campo}))
 
-(defn comparacao [tokens]
-  (let [[[_ campo]   resto] (consumir tokens)
-        [[_ op]      resto] (consumir resto)
-        [[_ literal] resto] (consumir resto)]
-    [[op (keyword campo) literal] resto]))
+      (not (#{:numero :texto} tipo-lit))
+      (throw (ex-info (str "falta o literal depois de " campo " " (name op))
+                      {:campo campo}))
+
+      :else
+      [[op (keyword campo) literal] resto])))
