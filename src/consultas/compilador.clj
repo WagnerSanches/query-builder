@@ -25,9 +25,34 @@
     :media       (erros-campos esquema [(second no)])
     :agrupar-por (let [[_ campo agregacao] no]
                    (into (erros-campos esquema [campo])
-                         (erros-no esquema agregacao)))))
+                         (erros-no esquema agregacao)))
+    :onde        (into (erros-campos esquema (campos-da-expr (second no)))
+                       (erros-tipo-expr esquema (second no)))))
 
 (defn validar [ast esquema]
   (let [nos (cond-> (:estagios ast)
               (:terminal ast) (conj (:terminal ast)))]
     (vec (mapcat #(erros-no esquema %) nos))))
+
+(defn- tipo-do-literal [v]
+  (cond
+    (string? v)  :texto
+    (integer? v) :inteiro
+    :else        :decimal))
+
+(defn- numerico? [tipo]
+  (contains? #{:inteiro :decimal} tipo))
+
+(defn- erros-tipo-expr [esquema expr]
+  (case (first expr)
+    (:e :ou)               (concat (erros-tipo-expr esquema (nth expr 1))
+                                   (erros-tipo-expr esquema (nth expr 2)))
+    :nao                   (erros-tipo-expr esquema (second expr))
+    (:= :!= :< :<= :> :>=) (let [[_ campo literal] expr
+                                 tipo-campo ((into {} esquema) campo)
+                                 tipo-lit   (tipo-do-literal literal)]
+                             (if (or (nil? tipo-campo)
+                                     (= (numerico? tipo-campo) (numerico? tipo-lit)))
+                               []
+                               [(str "comparacao entre " (name tipo-campo) " e " (name tipo-lit)
+                                     " no campo " (name campo))]))))
