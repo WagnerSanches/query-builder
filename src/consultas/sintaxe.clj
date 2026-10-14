@@ -144,10 +144,23 @@
         (recur (rest resto) campos)
         [[:selecionar campos] resto]))))
 
+(defn terminal-soma [tokens]    ; tokens começa depois de "soma"
+  (let [[[_ campo] resto] (consumir tokens)]
+    [[:soma (keyword campo)] resto]))
+
+(defn terminal-media [tokens]   ; tokens começa depois de "media"
+  (let [[[_ campo] resto] (consumir tokens)]
+    [[:media (keyword campo)] resto]))
+
+    
 (defn estagio [elemento]
   (let [[primeiro resto] (consumir elemento)]
     (cond
       (= primeiro [:palavra "onde"])       (estagio-onde resto)
       (= primeiro [:palavra "ordenar"])    (estagio-ordenar resto)
       (= primeiro [:palavra "limitar"])    (estagio-limitar resto)
-      (= primeiro [:palavra "selecionar"]) (estagio-selecionar resto))))
+      (= primeiro [:palavra "selecionar"]) (estagio-selecionar resto)
+      (= primeiro [:palavra "contar"])     [[:contar] resto]
+      (= primeiro [:palavra "soma"])       (terminal-soma resto)
+      (= primeiro [:palavra "media"])      (terminal-media resto))))
+
