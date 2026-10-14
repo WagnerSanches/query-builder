@@ -41,3 +41,15 @@
 
 (defn consulta []
   {:estagios [] :terminal nil})
+
+(defn onde [c expr]
+  (update c :estagios conj [:onde expr]))
+
+(defn ordenar-por [c campo ordem]
+  (update c :estagios conj [:ordenar-por campo ordem]))
+
+(defn limitar [c n]
+  (update c :estagios conj [:limitar n]))
+
+(defn selecionar [c campos]
+  (update c :estagios conj [:selecionar campos]))
