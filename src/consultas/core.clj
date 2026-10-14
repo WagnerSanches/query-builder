@@ -38,3 +38,6 @@
 
 (defn analisar [texto]
   (sintaxe/analisar texto))
+
+(defn consulta []
+  {:estagios [] :terminal nil})
