@@ -72,3 +72,24 @@
 
       :else
       [[op (keyword campo) literal] resto])))
+
+(declare expressao)
+
+(defn unidade [tokens]
+  (cond
+    (= (first tokens) [:palavra "nao"])
+    (let [[no resto] (unidade (rest tokens))]
+      [[:nao no] resto])
+
+    (= (first tokens) [:abre])
+    (let [[no resto] (expressao (rest tokens))]
+      (if (= (first resto) [:fecha])
+        [no (rest resto)]
+        (throw (ex-info "parentese sem fechar" {}))))
+
+    :else
+    (comparacao tokens)))
+
+(defn expressao [tokens]
+  (unidade tokens))
+
