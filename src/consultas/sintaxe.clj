@@ -119,3 +119,35 @@
         (if (empty? resto)
           (conj elementos elemento)
           (recur (rest resto) (conj elementos elemento)))))))
+
+(defn estagio-onde [tokens]          ; tokens começa depois de "onde"
+  (let [[expr resto] (expressao tokens)]
+    [[:onde expr] resto]))
+
+(defn estagio-ordenar [tokens]       ; tokens começa depois de "ordenar"
+  (let [[_por resto]      (consumir tokens)
+        [[_ campo] resto] (consumir resto)
+        desc?             (= (first resto) [:palavra "desc"])
+        resto             (if desc? (rest resto) resto)]
+    [[:ordenar-por (keyword campo) (if desc? :desc :asc)] resto]))
+
+(defn estagio-limitar [tokens]       ; tokens começa depois de "limitar"
+  (let [[[_ n] resto] (consumir tokens)]
+    [[:limitar n] resto]))
+
+(defn estagio-selecionar [tokens]    ; tokens começa depois de "selecionar"
+  (loop [ts tokens
+         campos []]
+    (let [[[_ campo] resto] (consumir ts)
+          campos (conj campos (keyword campo))]
+      (if (= (first resto) [:virgula])
+        (recur (rest resto) campos)
+        [[:selecionar campos] resto]))))
+
+(defn estagio [elemento]
+  (let [[primeiro resto] (consumir elemento)]
+    (cond
+      (= primeiro [:palavra "onde"])       (estagio-onde resto)
+      (= primeiro [:palavra "ordenar"])    (estagio-ordenar resto)
+      (= primeiro [:palavra "limitar"])    (estagio-limitar resto)
+      (= primeiro [:palavra "selecionar"]) (estagio-selecionar resto))))
