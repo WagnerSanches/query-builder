@@ -14,26 +14,6 @@
     :nao                   (campos-da-expr (second expr))
     (:= :!= :< :<= :> :>=) [(second expr)]))
 
-(defn- erros-no [esquema no]
-  (case (first no)
-    :onde        (erros-campos esquema (campos-da-expr (second no)))
-    :ordenar-por (erros-campos esquema [(second no)])
-    :limitar     []
-    :selecionar  (erros-campos esquema (second no))
-    :contar      []
-    :soma        (erros-campos esquema [(second no)])
-    :media       (erros-campos esquema [(second no)])
-    :agrupar-por (let [[_ campo agregacao] no]
-                   (into (erros-campos esquema [campo])
-                         (erros-no esquema agregacao)))
-    :onde        (into (erros-campos esquema (campos-da-expr (second no)))
-                       (erros-tipo-expr esquema (second no)))))
-
-(defn validar [ast esquema]
-  (let [nos (cond-> (:estagios ast)
-              (:terminal ast) (conj (:terminal ast)))]
-    (vec (mapcat #(erros-no esquema %) nos))))
-
 (defn- tipo-do-literal [v]
   (cond
     (string? v)  :texto
@@ -56,3 +36,25 @@
                                []
                                [(str "comparacao entre " (name tipo-campo) " e " (name tipo-lit)
                                      " no campo " (name campo))]))))
+
+(defn- erros-no [esquema no]
+  (case (first no)
+    :ordenar-por (erros-campos esquema [(second no)])
+    :limitar     []
+    :selecionar  (erros-campos esquema (second no))
+    :contar      []
+    :soma        (into (erros-campos esquema [(second no)])
+                       (erro-numerico esquema :soma (second no)))
+    :media       (into (erros-campos esquema [(second no)])
+                       (erro-numerico esquema :media (second no)))
+    :agrupar-por (let [[_ campo agregacao] no]
+                   (into (erros-campos esquema [campo])
+                         (erros-no esquema agregacao)))
+    :onde        (into (erros-campos esquema (campos-da-expr (second no)))
+                       (erros-tipo-expr esquema (second no)))))
+
+(defn- erro-numerico [esquema agregacao campo]
+  (let [tipo ((into {} esquema) campo)]
+    (if (and tipo (not (numerico? tipo)))
+      [(str (name agregacao) " exige campo numerico: " (name campo))]
+      [])))
