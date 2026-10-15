@@ -36,7 +36,17 @@
                                []
                                [(str "comparacao entre " (name tipo-campo) " e " (name tipo-lit)
                                      " no campo " (name campo))]))))
+(defn- erro-numerico [esquema agregacao campo]
+  (let [tipo ((into {} esquema) campo)]
+    (if (and tipo (not (numerico? tipo)))
+      [(str (name agregacao) " exige campo numerico: " (name campo))]
+      [])))
 
+(defn- erros-ordem [nos]
+  (if (some #(= :selecionar (first %)) (butlast nos))
+    ["selecionar tem que ser o ultimo elemento da consulta"]
+    []))
+    
 (defn- erros-no [esquema no]
   (case (first no)
     :ordenar-por (erros-campos esquema [(second no)])
@@ -53,8 +63,10 @@
     :onde        (into (erros-campos esquema (campos-da-expr (second no)))
                        (erros-tipo-expr esquema (second no)))))
 
-(defn- erro-numerico [esquema agregacao campo]
-  (let [tipo ((into {} esquema) campo)]
-    (if (and tipo (not (numerico? tipo)))
-      [(str (name agregacao) " exige campo numerico: " (name campo))]
-      [])))
+
+
+(defn validar [ast esquema]
+  (let [nos (cond-> (:estagios ast)
+              (:terminal ast) (conj (:terminal ast)))]
+    (into (vec (mapcat #(erros-no esquema %) nos))
+          (erros-ordem nos))))
