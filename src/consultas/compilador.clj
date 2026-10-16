@@ -70,3 +70,46 @@
               (:terminal ast) (conj (:terminal ast)))]
     (into (vec (mapcat #(erros-no esquema %) nos))
           (erros-ordem nos))))
+
+
+(def ^:private testes
+  {:=  zero?
+   :!= #(not (zero? %))
+   :<  neg?
+   :<= #(<= % 0)
+   :>  pos?
+   :>= #(>= % 0)})
+
+(defn- compilar-comparacao [[op campo literal]]
+  (let [teste (testes op)]
+    (fn [registro]
+      (teste (compare (get registro campo) literal)))))
+
+(defn compilar-expr [expr]
+  (case (first expr)
+    :e   (let [a (compilar-expr (nth expr 1))
+               b (compilar-expr (nth expr 2))]
+           (fn [registro] (and (a registro) (b registro))))
+    :ou  (let [a (compilar-expr (nth expr 1))
+               b (compilar-expr (nth expr 2))]
+           (fn [registro] (or (a registro) (b registro))))
+    :nao (let [a (compilar-expr (second expr))]
+           (fn [registro] (not (a registro))))
+    (:= :!= :< :<= :> :>=) (compilar-comparacao expr)))   
+
+(defn compilar-estagio [no]
+  (case (first no)
+    :onde        (partial filter (compilar-expr (second no)))
+    :limitar     (partial take (second no))
+    :selecionar  (let [campos (second no)]
+                   (partial map #(select-keys % campos)))
+    :ordenar-por (let [[_ campo ordem] no
+                       comparador (case ordem
+                                    :asc  compare
+                                    :desc #(compare %2 %1))]
+                   (partial sort-by campo comparador))))
+
+(defn campos-de-saida [ast esquema]
+  (if-let [sel (some #(when (= :selecionar (first %)) %) (:estagios ast))]
+    (second sel)
+    (mapv first esquema)))

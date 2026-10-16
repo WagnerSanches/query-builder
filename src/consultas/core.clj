@@ -1,6 +1,7 @@
 (ns consultas.core
   (:require [clojure.string :as str]
-            [consultas.sintaxe :as sintaxe]))
+            [consultas.sintaxe :as sintaxe]
+            [consultas.compilador :as compilador]))
 
 (defn linhas [texto]
   (->> (str/split-lines texto)
@@ -53,3 +54,9 @@
 
 (defn selecionar [c campos]
   (update c :estagios conj [:selecionar campos]))
+
+(defn executar [c dados]
+  (let [erros (compilador/validar c (:esquema dados))]
+    (if (seq erros)
+      {:erros erros}
+      (:registros dados))))
