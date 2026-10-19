@@ -113,3 +113,32 @@
   (if-let [sel (some #(when (= :selecionar (first %)) %) (:estagios ast))]
     (second sel)
     (mapv first esquema)))
+
+(defn compilar-estagios [estagios]
+  (reduce (fn [composta estagio] (comp estagio composta))
+          identity
+          (map compilar-estagio estagios)))
+(defn- contar [registros]
+  (reduce (fn [n _] (inc n)) 0 registros))
+
+(defn- somar [campo registros]
+  (reduce (fn [total r] (+ total (get r campo))) 0 registros))
+
+(defn- media [campo registros]
+  (let [[total n] (reduce (fn [[total n] r] [(+ total (get r campo)) (inc n)])
+                          [0 0]
+                          registros)]
+    (if (zero? n) 0.0 (/ (double total) n))))
+
+(defn- agrupar [campo agregar registros]
+  (->> (group-by campo registros)
+       (sort-by key)
+       (map (fn [[chave grupo]] [chave (agregar grupo)]))))
+
+(defn compilar-terminal [no]
+  (case (first no)
+    :contar      contar
+    :soma        (partial somar (second no))
+    :media       (partial media (second no))
+    :agrupar-por (let [[_ campo agregacao] no]
+                   (partial agrupar campo (compilar-terminal agregacao)))))
