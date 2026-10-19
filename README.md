@@ -17,35 +17,6 @@ Todo nó é um vetor cujo primeiro elemento é uma palavra-chave com o tipo do n
 
 A consulta vazia (`QUERY` sem nada) é `{:estagios [] :terminal nil}`.
 
-### Estágios (em `:estagios`)
-
-| Nó | Texto |
-|---|---|
-| `[:onde expr]` | `onde <expr>` |
-| `[:ordenar-por campo ordem]` | `ordenar por <campo> [desc]`; `ordem` é `:asc` ou `:desc`, sempre explícita |
-| `[:limitar n]` | `limitar <n>` |
-| `[:selecionar [campo ...]]` | `selecionar <campo>, <campo>, ...` |
-
-### Terminais (em `:terminal`)
-
-| Nó | Texto |
-|---|---|
-| `[:contar]` | `contar` |
-| `[:soma campo]` | `soma <campo>` |
-| `[:media campo]` | `media <campo>` |
-| `[:agrupar-por campo agregacao]` | `agrupar por <campo> com <agregacao>`; `agregacao` é um dos três nós acima |
-
-### Expressões (dentro de `:onde`)
-
-| Nó | Texto |
-|---|---|
-| `[op campo literal]` | `<campo> <op> <literal>`; `op` é `:=`, `:!=`, `:<`, `:<=`, `:>` ou `:>=` |
-| `[:e a b]` | `a e b` |
-| `[:ou a b]` | `a ou b` |
-| `[:nao a]` | `nao a` |
-
-O literal mantém o tipo em que foi escrito: inteiro (`8`), decimal (`8.6`) ou texto (`"drama"`). Correntes do mesmo operador associam à esquerda: `a e b e c` vira `[:e [:e a b] c]`.
-
 ### Exemplos
 
 **1. Filtro, ordenação, limite e projeção**
